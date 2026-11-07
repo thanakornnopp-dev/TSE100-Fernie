@@ -9,6 +9,10 @@
 [![Cloud](https://img.shields.io/badge/Cloud-Google%20Apps%20Script%20%2B%20Sheets-green.svg)](https://workspace.google.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+[![Live Website](https://img.shields.io/badge/🌍_Live_Website-คลิกเปิดดูเว็บจำลองสดได้ทันที-success?style=for-the-badge&logo=googlechrome&logoColor=white)](https://thanakornnopp-dev.github.io/TSE100-Fernie/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-Active-emerald?style=for-the-badge&logo=github)](https://thanakornnopp-dev.github.io/TSE100-Fernie/)
+[![Google Dashboard](https://img.shields.io/badge/📊_Live-Google_Apps_Script_Dashboard-amber?style=for-the-badge&logo=googlesheets&logoColor=white)](https://script.google.com/macros/s/AKfycbzncy-C_VV7vz-ZxKnKT_dgyhzXmPWLef3YGY6YuxaTJczWhCDAvPu5xad_2v3xgNjT/exec)
+
 ---
 
 ## 📌 บทคัดย่อและที่มาของโครงการ (Executive Summary)
@@ -26,7 +30,10 @@
 ## 🖥️ หน้าเว็บพอร์ทัลแบบจำลองและการเตรียมสอบ (Interactive Portal)
 
 เปิดดูหน้าเว็บนำเสนอโครงการ ซิมูเลเตอร์ทดสอบบอร์ดแบบสดๆ และคลัง 15 ข้อสอบกรรมการ:
-👉 **[เปิดดูไฟล์ index.html ในโฟลเดอร์โครงการ](./index.html)** หรือผ่าน Live Preview
+### 🌐 ลิงก์เข้าชมหน้าเว็บ Interactive Portal (คลิกเปิดดูได้ทันที ไม่ใช่โค้ด):
+👉 **[https://thanakornnopp-dev.github.io/TSE100-Fernie/](https://thanakornnopp-dev.github.io/TSE100-Fernie/)**
+
+*(เข้าดูได้ทั้งบนคอมพิวเตอร์และมือถือ มีทั้งซิมูเลเตอร์เสาไฟเรืองแสงสด, สวิตช์สลับกลางวัน/กลางคืน, ระบบนับคน, คลัง 15 ข้อสอบกรรมการพร้อมแนวตอบ, และผังวงจร)*
 
 ---
 
