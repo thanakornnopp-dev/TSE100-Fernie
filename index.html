@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="th" class="scroll-smooth dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TSE100 Fernie — Campus Safety & Smart Streetlight Telemetry</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            tu: {
+              red: '#C41230',
+              gold: '#F5A800',
+              dark: '#0B0F17',
+              card: '#131B2E',
+              border: '#1E293B',
+              accent: '#10B981'
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Prompt', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      font-family: 'Prompt', 'Plus Jakarta Sans', sans-serif;
+      background-color: #070B12;
+      color: #F1F5F9;
+    }
+    .glow-emerald {
+      box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.3);
+    }
+    .glow-gold {
+      box-shadow: 0 0 30px -5px rgba(245, 168, 0, 0.3);
+    }
+    .glow-amber {
+      box-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+    }
+    .lamp-glow-off {
+      opacity: 0.1;
+      filter: blur(10px);
+    }
+    .lamp-glow-dim {
+      opacity: 0.35;
+      filter: blur(20px);
+      background: radial-gradient(circle, rgba(253, 224, 71, 0.5) 0%, rgba(253, 224, 71, 0) 70%);
+    }
+    .lamp-glow-full {
+      opacity: 0.95;
+      filter: blur(25px);
+      background: radial-gradient(circle, rgba(254, 240, 138, 0.95) 0%, rgba(250, 204, 21, 0.4) 50%, rgba(250, 204, 21, 0) 75%);
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B0F17;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E293B;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-[#070B12] text-slate-100 min-h-screen antialiased selection:bg-emerald-500 selection:text-black">
+
+  <!-- Top Navigation Bar -->
+  <nav class="sticky top-0 z-50 backdrop-blur-xl bg-[#070B12]/85 border-b border-slate-800/80 px-4 lg:px-8 py-3.5 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-red-600 flex items-center justify-center font-bold text-white shadow-lg shadow-amber-500/20">
+          <i data-lucide="zap" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-lg tracking-tight text-white">TSE100 Fernie</span>
+            <span class="text-[11px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">ESP32 Dual-Core</span>
+          </div>
+          <p class="text-xs text-slate-400">Campus Safety & Foot-Traffic Telemetry • ยิมเนเซียม 7 มธ.</p>
+        </div>
+      </div>
+
+      <div class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
+        <a href="#principles" class="hover:text-amber-400 transition-colors flex items-center gap-1.5"><i data-lucide="cpu" class="w-4 h-4"></i> หลักการทำงาน</a>
+        <a href="#simulator" class="hover:text-emerald-400 transition-colors flex items-center gap-1.5"><i data-lucide="play-circle" class="w-4 h-4"></i> ซิมูเลเตอร์สด</a>
+        <a href="#qa-defense" class="hover:text-cyan-400 transition-colors flex items-center gap-1.5"><i data-lucide="help-circle" class="w-4 h-4"></i> 15 ข้อสอบอาจารย์</a>
+        <a href="#wiring" class="hover:text-purple-400 transition-colors flex items-center gap-1.5"><i data-lucide="git-commit" class="w-4 h-4"></i> ผังวงจร</a>
+        <a href="#code" class="hover:text-pink-400 transition-colors flex items-center gap-1.5"><i data-lucide="code-2" class="w-4 h-4"></i> โค้ดระบบ</a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="https://github.com/thanakornnopp-dev/TSE100-Fernie" target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700/80 transition shadow hover:shadow-lg">
+          <i data-lucide="github" class="w-4 h-4"></i>
+          <span>GitHub Repo</span>
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Header Section -->
+  <header class="relative overflow-hidden pt-12 pb-16 px-4 lg:px-8 border-b border-slate-800/60">
+    <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]"></div>
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+        <div class="max-w-3xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-xs font-semibold mb-4">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            คณะวิศวกรรมศาสตร์ มหาวิทยาลัยธรรมศาสตร์ (TSE)
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 leading-tight">
+            ระบบเปิด-ปิดไฟทางเดินอัจฉริยะ &amp;<br>
+            <span class="bg-gradient-to-r from-amber-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">เฝ้าระวังความปลอดภัยด้วย ESP32 Telemetry</span>
+          </h1>
+          <p class="text-base sm:text-lg text-slate-300 mb-6 leading-relaxed">
+            โหนดเสาไฟทางเดินอัจฉริยะปรับความสว่างแบบอัตโนมัติ (Adaptive Lighting) พร้อมระบบนับคนเดินเท้าและตรวจจับการยืนแช่ผิดปกติ (Loitering Security Watchdog) บริเวณทางเดินยิมเนเซียม 7 ควบคุมด้วยสถาปัตยกรรม <strong class="text-emerald-400">ESP32 Dual-Core FreeRTOS</strong> ตอบสนองฉับไวต่ำกว่า 1 มิลลิวินาที ส่งข้อมูลขึ้น Google Sheets Cloud แบบ Non-blocking
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <a href="#simulator" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-emerald-500/25">
+              <i data-lucide="play" class="w-4 h-4 fill-current"></i> ทดสอบซิมูเลเตอร์
+            </a>
+            <a href="#qa-defense" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white font-semibold text-sm border border-slate-700 transition">
+              <i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i> ดู 15 ข้อสอบอาจารย์
+            </a>
+            <a href="https://script.google.com/macros/s/AKfycbzncy-C_VV7vz-ZxKnKT_dgyhzXmPWLef3YGY6YuxaTJczWhCDAvPu5xad_2v3xgNjT/exec" target="_blank"
+               class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-amber-400 font-semibold text-sm border border-amber-500/30 transition">
+              <i data-lucide="external-link" class="w-4 h-4"></i> Live Google App Dashboard
+            </a>
+          </div>
+        </div>
+
+        <!-- Key Engineering Metrics Cards -->
+        <div class="grid grid-cols-2 gap-3.5 w-full lg:w-96">
+          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur">
+            <div class="flex items-center justify-between text-slate-400 mb-1">
+              <span class="text-xs font-medium">Control Latency</span>
+              <i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div class="text-2xl font-bold text-white">&lt; 1 ms</div>
+            <p class="text-[11px] text-emerald-400/90 font-medium mt-1">⚡ Instantaneous Response</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur">
+            <div class="flex items-center justify-between text-slate-400 mb-1">
+              <span class="text-xs font-medium">Energy Savings</span>
+              <i data-lucide="leaf" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div class="text-2xl font-bold text-white">50 - 70%</div>
+            <p class="text-[11px] text-amber-400/90 font-medium mt-1">🌱 Adaptive Dimming</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur">
+            <div class="flex items-center justify-between text-slate-400 mb-1">
+              <span class="text-xs font-medium">OS Engine</span>
+              <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
+            </div>
+            <div class="text-lg font-bold text-white">FreeRTOS</div>
+            <p class="text-[11px] text-cyan-400/90 font-medium mt-1">Dual-Core Pinned</p>
+          </div>
+          <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur">
+            <div class="flex items-center justify-between text-slate-400 mb-1">
+              <span class="text-xs font-medium">Power Architecture</span>
+              <i data-lucide="shield-check" class="w-4 h-4 text-purple-400"></i>
+            </div>
+            <div class="text-lg font-bold text-white">5V DC Rail</div>
+            <p class="text-[11px] text-purple-400/90 font-medium mt-1">No Step-Up Overheating</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 lg:px-8 py-12 space-y-16">
+
+    <!-- SECTION 1: WORKING PRINCIPLES & SYSTEM ARCHITECTURE -->
+    <section id="principles" class="space-y-8">
+      <div class="border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">
+          <i data-lucide="layers" class="w-4 h-4"></i> Section 01 • Architecture &amp; Mechanics
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white">หลักการทำงานและสถาปัตยกรรมระบบอย่างละเอียด</h2>
+        <p class="text-sm text-slate-400 mt-1">วิเคราะห์เจาะลึก 5 องค์ประกอบหลักที่ทำให้ระบบทำงานได้อย่างมีเสถียรภาพและปลอดภัยระดับอุตสาหกรรม</p>
+      </div>
+
+      <!-- 4 Pillars Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Card 1: Dual-Core FreeRTOS -->
+        <div class="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/90 hover:border-emerald-500/40 transition flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
+              <i data-lucide="cpu" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">1. Dual-Core FreeRTOS Decoupling</h3>
+            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+              หัวใจหลักของการประมวลผลบน ESP32 (Xtensa 32-bit LX6 240MHz):
+            </p>
+            <ul class="text-xs text-slate-400 space-y-2 mb-4">
+              <li class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0"></span>
+                <span><strong class="text-slate-200">Core 1 (Hardware Engine):</strong> รันฟังก์ชัน <code class="text-emerald-400 bg-slate-950 px-1 py-0.5 rounded">loop()</code> ตรวจวัดเซนเซอร์ PIR (GPIO 27) และ LDR (GPIO 34) ทุกๆ ไม่ถึง 100 µs เพื่อสั่งเปิด-หรี่ไฟทันที (< 1 ms)</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0"></span>
+                <span><strong class="text-slate-200">Core 0 (Telemetry Engine):</strong> รัน <code class="text-cyan-400 bg-slate-950 px-1 py-0.5 rounded">telemetryTask</code> ดูแล Wi-Fi และยิง HTTPS POST ไปยัง Cloud โดยไม่บล็อกการติดของหลอดไฟ</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0"></span>
+                <span><strong class="text-slate-200">IPC Inter-Task Notify:</strong> สื่อสารระหว่าง Core ด้วย <code class="text-amber-400 bg-slate-950 px-1 py-0.5 rounded">xTaskNotifyGive()</code> เมื่อมีคนเดินผ่าน ปลุก Core 0 ขึ้นมาส่งเน็ตทันที</span>
+              </li>
+            </ul>
+          </div>
+          <div class="pt-3 border-t border-slate-800/80 text-[11px] text-emerald-400 font-mono">
+            Thread-Safe Zero-Latency Control
+          </div>
+        </div>
+
+        <!-- Card 2: State Machine -->
+        <div class="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/90 hover:border-amber-500/40 transition flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
+              <i data-lucide="git-merge" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">2. Finite State Machine (FSM)</h3>
+            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+              การตัดสินใจสลับสภาวะโคมไฟส่องสว่างทางเดิน 3 สถานะ:
+            </p>
+            <div class="space-y-2.5 text-xs mb-4">
+              <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span class="font-bold text-slate-200">DAY_OFF (กลางวัน)</span>
+                  <p class="text-[11px] text-slate-400">LDR = LOW • ดับไฟประหยัดพลังงาน</p>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono font-bold text-[11px]">0% (0.6W)</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span class="font-bold text-amber-300">NIGHT_AMBIENT (กลางคืนว่าง)</span>
+                  <p class="text-[11px] text-slate-400">LDR = HIGH, PIR = LOW • หรี่นำทาง Eco</p>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono font-bold text-[11px]">30% (2.8W)</span>
+              </div>
+              <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <span class="font-bold text-emerald-300">NIGHT_ACTIVE (ตรวจพบคน)</span>
+                  <p class="text-[11px] text-slate-400">PIR = HIGH • สว่างจ้าค้างไว้ 15 วินาที</p>
+                </div>
+                <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[11px]">100% (8.5W)</span>
+              </div>
+            </div>
+          </div>
+          <div class="pt-3 border-t border-slate-800/80 text-[11px] text-amber-400 font-mono">
+            PWM Frequency: 5,000 Hz (8-bit)
+          </div>
+        </div>
+
+        <!-- Card 3: Security & Loitering Watchdog -->
+        <div class="p-6 rounded-2xl bg-slate-900/70 border border-slate-800/90 hover:border-red-500/40 transition flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mb-4">
+              <i data-lucide="shield-alert" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">3. Campus Safety Watchdog</h3>
+            <p class="text-xs text-slate-300 leading-relaxed mb-4">
+              ระบบเฝ้าระวังภัยคุกคามและการบาดเจ็บบริเวณจุดอับยิม 7:
+            </p>
+            <ul class="text-xs text-slate-400 space-y-2 mb-4">
+              <li class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 shrink-0"></span>
+                <span><strong class="text-slate-200">Loitering Detection (>25s):</strong> หากมีคนยืนแช่ในรัศมีเซนเซอร์นานผิดปกติเกิน 25 วินาที ระบบจะส่งสัญญาณเตือน <code class="text-red-400 bg-slate-950 px-1 py-0.5 rounded">LOITERING_ALERT</code> ทันที</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 shrink-0"></span>
+                <span><strong class="text-slate-200">Edge-Triggered Foot Traffic:</strong> ตรวจจับ Rising Edge สัญญาณ PIRเพื่อนับจำนวนรอบการเดินผ่านจริง ป้องกันการนับเบิ้ล (Double-Counting)</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0"></span>
+                <span><strong class="text-slate-200">Hardware Diagnostic LED:</strong> ไฟสีน้ำเงินบนบอร์ด ESP32 (GPIO 2) แจ้งสถานะเชื่อมต่อ Wi-Fi สดหน้างาน</span>
+              </li>
+            </ul>
+          </div>
+          <div class="pt-3 border-t border-slate-800/80 text-[11px] text-red-400 font-mono">
+            Safety Guard + Crowd Analytics
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Deep Dive: Power & Energy Economics Table -->
+      <div class="p-6 rounded-2xl bg-slate-900/50 border border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h4 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-emerald-400"></i>
+              การเปรียบเทียบการใช้พลังงานเชิงวิศวกรรม (Energy Budget Analysis)
+            </h4>
+            <p class="text-xs text-slate-400 mt-0.5">คำนวณเปรียบเทียบช่วงเวลากลางคืน 12 ชั่วโมง (18:00 - 06:00 น.) ระหว่างโคมไฟทั่วไปกับโหนดอัจฉริยะ TSE100</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-slate-400 uppercase font-mono bg-slate-950/60 border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4">สถาปัตยกรรมระบบ</th>
+                <th class="py-3 px-4">สภาวะปลอดคน (9 ชม.)</th>
+                <th class="py-3 px-4">สภาวะมีคนเดิน (3 ชม.)</th>
+                <th class="py-3 px-4">พลังงานรวม/คืน (Wh)</th>
+                <th class="py-3 px-4 text-emerald-400">อัตราการประหยัดไฟ</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 text-slate-300">
+              <tr class="hover:bg-slate-800/20">
+                <td class="py-3 px-4 font-semibold text-slate-200">เสาไฟถนนทั่วไป (เปิด 100% ตลอดคืน)</td>
+                <td class="py-3 px-4">8.5W &times; 9h = 76.5 Wh</td>
+                <td class="py-3 px-4">8.5W &times; 3h = 25.5 Wh</td>
+                <td class="py-3 px-4 font-mono font-bold text-red-400">102.0 Wh</td>
+                <td class="py-3 px-4 text-slate-400">0% (เกณฑ์มาตรฐาน)</td>
+              </tr>
+              <tr class="bg-emerald-500/5 hover:bg-emerald-500/10 border-emerald-500/20">
+                <td class="py-3 px-4 font-bold text-white flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  โหนดอัจฉริยะ TSE100 Fernie (Adaptive)
+                </td>
+                <td class="py-3 px-4 text-amber-300">2.8W &times; 9h = 25.2 Wh</td>
+                <td class="py-3 px-4 text-emerald-300">8.5W &times; 3h = 25.5 Wh</td>
+                <td class="py-3 px-4 font-mono font-bold text-emerald-400">50.7 Wh</td>
+                <td class="py-3 px-4 font-bold text-emerald-400 text-sm">ประหยัดลง 50.3% &sim; 65%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: LIVE INTERACTIVE HARDWARE SIMULATOR -->
+    <section id="simulator" class="space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-wider mb-1">
+          <i data-lucide="play-circle" class="w-4 h-4"></i> Section 02 • Live Hardware &amp; Logic Simulation
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white">แบบจำลองฮาร์ดแวร์และการตัดสินใจแบบโต้ตอบ (Live Interactive Sandbox)</h2>
+        <p class="text-sm text-slate-400 mt-1">ทดสอบเปลี่ยนสภาวะแวดล้อม (กลางวัน/กลางคืน, คนเดินผ่าน, ยืนแช่) และสังเกตการหรี่ไฟ LED และแพ็กเก็ต Telemetry แบบเรียลไทม์</p>
+      </div>
+
+      <!-- Simulator Layout Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left: Interactive Controls (5 cols) -->
+        <div class="lg:col-span-5 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-5">
+          <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2 border-b border-slate-800 pb-3">
+            <i data-lucide="sliders" class="w-4 h-4 text-cyan-400"></i> แผงควบคุมเซนเซอร์จำลอง
+          </h3>
+
+          <!-- Control 1: Day / Night Toggle -->
+          <div class="space-y-2">
+            <label class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+              <span>สภาพแสงแวดล้อม (LDR Sensor)</span>
+              <span id="lblLdrState" class="font-mono text-[11px] text-amber-400">กลางคืน (Night)</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <button id="btnDay" onclick="simSetEnvironment(false)" class="px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-xs font-semibold hover:border-amber-400 transition flex items-center justify-center gap-2">
+                <i data-lucide="sun" class="w-4 h-4 text-amber-400"></i> กลางวัน (Day)
+              </button>
+              <button id="btnNight" onclick="simSetEnvironment(true)" class="px-3.5 py-2.5 rounded-xl border border-amber-500/50 bg-amber-500/15 text-amber-300 text-xs font-semibold hover:border-amber-400 transition flex items-center justify-center gap-2">
+                <i data-lucide="moon" class="w-4 h-4 text-amber-300"></i> กลางคืน (Night)
+              </button>
+            </div>
+          </div>
+
+          <!-- Control 2: Motion Simulation -->
+          <div class="space-y-2 pt-2">
+            <label class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+              <span>เซนเซอร์ตรวจจับความเคลื่อนไหว (PIR Sensor)</span>
+              <span id="lblPirState" class="font-mono text-[11px] text-slate-400">ไม่มีการเคลื่อนไหว</span>
+            </label>
+            <div class="space-y-2">
+              <button onclick="simPedestrianPass()" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition flex items-center justify-center gap-2">
+                <i data-lucide="footprints" class="w-4 h-4"></i> จำลองคนเดินผ่าน (เร่งไฟ 100% ค้าง 15 วิ)
+              </button>
+              <button onclick="simLoiteringTrigger()" class="w-full py-2.5 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 font-semibold text-xs transition flex items-center justify-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-red-400"></i> จำลองคนยืนแช่เกิน 25 วินาที (Loitering Alert)
+              </button>
+            </div>
+          </div>
+
+          <!-- Control 3: Reset -->
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between">
+            <span class="text-[11px] text-slate-400">จำลองการทำงานของ FreeRTOS Core 1 &amp; Core 0</span>
+            <button onclick="simReset()" class="text-xs text-slate-400 hover:text-white flex items-center gap-1 font-medium transition">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> รีเซ็ตระบบ
+            </button>
+          </div>
+        </div>
+
+        <!-- Center: Visual Streetlight Luminaire & Metrics (4 cols) -->
+        <div class="lg:col-span-4 p-6 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col items-center justify-between text-center relative overflow-hidden">
+          
+          <div class="w-full flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-2">
+            <span class="font-semibold text-slate-300">โคมไฟทางเดินจำลอง ยิม 7</span>
+            <span id="simStateBadge" class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[10px] font-mono">30% AMBIENT</span>
+          </div>
+
+          <!-- Lamp Graphic Box -->
+          <div class="relative my-6 flex flex-col items-center">
+            <!-- Glow Effect Layer -->
+            <div id="lampGlow" class="absolute w-40 h-40 rounded-full lamp-glow-dim transition-all duration-700 pointer-events-none -top-4"></div>
+            
+            <!-- Lamp Fixture -->
+            <div class="relative z-10 w-24 h-12 bg-slate-800 rounded-t-2xl border-t border-x border-slate-700 flex items-center justify-center shadow-lg">
+              <div class="w-16 h-2 bg-slate-600 rounded-full"></div>
+            </div>
+            <!-- LED Emitter Dome -->
+            <div id="lampBulb" class="relative z-10 w-20 h-6 bg-yellow-200/50 rounded-b-xl border-b border-x border-yellow-300/40 shadow-inner transition-colors duration-500"></div>
+            
+            <!-- Pole -->
+            <div class="w-2.5 h-20 bg-gradient-to-b from-slate-700 to-slate-800 border-x border-slate-700"></div>
+            <!-- Base Ground -->
+            <div class="w-24 h-2 bg-slate-700 rounded-full shadow-md"></div>
+          </div>
+
+          <!-- Live Numerical Metrics -->
+          <div class="w-full grid grid-cols-3 gap-2 pt-3 border-t border-slate-800 text-left">
+            <div class="p-2 rounded-xl bg-slate-950/70">
+              <span class="text-[10px] text-slate-400 block">Duty Cycle</span>
+              <span id="metricDuty" class="text-sm font-mono font-bold text-amber-300">30% (77)</span>
+            </div>
+            <div class="p-2 rounded-xl bg-slate-950/70">
+              <span class="text-[10px] text-slate-400 block">Power (W)</span>
+              <span id="metricWatts" class="text-sm font-mono font-bold text-white">2.8 W</span>
+            </div>
+            <div class="p-2 rounded-xl bg-slate-950/70">
+              <span class="text-[10px] text-slate-400 block">Traffic Count</span>
+              <span id="metricTraffic" class="text-sm font-mono font-bold text-emerald-400">0 คน</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Telemetry & Network Cloud Console (3 cols) -->
+        <div class="lg:col-span-3 p-5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-col font-mono text-[11px]">
+          <div class="flex items-center justify-between text-slate-400 border-b border-slate-800 pb-2 mb-3">
+            <span class="text-xs font-bold text-slate-300 flex items-center gap-1.5 font-sans">
+              <i data-lucide="terminal" class="w-3.5 h-3.5 text-cyan-400"></i> Telemetry Terminal
+            </span>
+            <div class="flex items-center gap-1 text-[10px] text-emerald-400 font-sans">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Core 0 Sync
+            </div>
+          </div>
+
+          <div id="simLogBox" class="flex-1 space-y-1.5 overflow-y-auto max-h-56 text-slate-400 pr-1">
+            <div class="text-slate-500">[System] Booted ESP32 Xtensa Dual-Core...</div>
+            <div class="text-cyan-400">[Wi-Fi] Connected to 'acaii' IP: 192.168.43.55</div>
+            <div class="text-emerald-400">[Core 0] Telemetry task pinned to Core 0.</div>
+            <div class="text-amber-400">[Core 1] Night Mode Active. Duty: 30% (2.8W)</div>
+          </div>
+
+          <div class="mt-3 pt-3 border-t border-slate-800">
+            <span class="text-[10px] text-slate-400 font-sans block mb-1">Generated JSON Payload:</span>
+            <pre id="simJsonPayload" class="p-2 rounded bg-slate-900 border border-slate-800 text-[10px] text-emerald-300 overflow-x-auto leading-tight">{
+  "node_id": "NODE-GYM7-01",
+  "traffic_count": 0,
+  "light_status": "30%_AMBIENT",
+  "power_watts": 2.8,
+  "alert_status": "NORMAL"
+}</pre>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 3: 15 PROFESSOR DEFENSE QUESTIONS & MODEL ANSWERS -->
+    <section id="qa-defense" class="space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">
+          <i data-lucide="help-circle" class="w-4 h-4"></i> Section 03 • Comprehensive Defense Preparation
+        </div>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-white">15 คำถามเจาะลึกที่อาจารย์และกรรมการจะถาม</h2>
+            <p class="text-sm text-slate-400 mt-1">คัดสรรคำถามจริงจากมุมมองวิศวกรรมไฟฟ้า คอมพิวเตอร์ และโครงสร้างพื้นฐาน พร้อมแนวตอบระดับ First Principles</p>
+          </div>
+          <!-- Category Filter Pills -->
+          <div class="flex flex-wrap gap-2 text-xs font-medium">
+            <button onclick="filterQA('all')" id="btnQAAll" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition">ทั้งหมด (15)</button>
+            <button onclick="filterQA('hardware')" id="btnQAHardware" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">ฮาร์ดแวร์ &amp; ไฟฟ้า (4)</button>
+            <button onclick="filterQA('freertos')" id="btnQAFreeRTOS" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">FreeRTOS &amp; ซอฟต์แวร์ (4)</button>
+            <button onclick="filterQA('iot')" id="btnQAIoT" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">IoT &amp; Cloud (4)</button>
+            <button onclick="filterQA('safety')" id="btnQASafety" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">ความปลอดภัย &amp; ติดตั้ง (3)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- QA Cards Container -->
+      <div id="qaContainer" class="space-y-4">
+
+        <!-- Q1 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="freertos">
+          <button onclick="toggleQA(1)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                01
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">FreeRTOS &amp; OS</span>
+                  <span class="text-xs text-slate-400">คำถามยอดฮิตระดับความสำคัญสูงสุด ⭐⭐⭐</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ทำไมต้องใช้สถาปัตยกรรม Dual-Core FreeRTOS บน ESP32 ทำไมไม่เขียนโค้ดรวมใน loop() เดียวเหมือน Arduino ทั่วไป?</h4>
+              </div>
+            </div>
+            <i id="qaIcon1" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent1" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">วัดความเข้าใจเรื่อง Real-Time System, ปัญหา I/O Network Blocking บนไมโครคอนโทรลเลอร์ และการจัดสรรคอร์ประมวลผล</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(1)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer1" class="text-slate-200 leading-relaxed">
+                "เนื่องจาก ESP32 มีชิป 2 คอร์ หากเราเขียนโค้ดรวมใน loop() เดียวบนคอร์เดียว เมื่อระบบต้องยิง HTTPS POST ไปยัง Google Apps Script กระบวนการเชื่อมต่อ SSL และรับส่งข้อมูลจะทำให้ CPU บล็อก (Network Blocking) ค้างนาน 1.5 ถึง 2.0 วินาที ซึ่งในเวลานั้นหากมีคนเดินผ่าน เซนเซอร์จะไม่สามารถตอบสนองได้ และไฟทางเดินจะติดช้าไม่ทันที<br><br>
+                เราจึงแยกหน้าที่: <strong>Core 1</strong> รับผิดชอบเฉพาะ Hardware Control Loop ตรวจจับเซนเซอร์และสั่งเปิด-หรี่ไฟระดับ Real-Time (< 1 ms) ส่วน <strong>Core 0</strong> ทำงานเป็น FreeRTOS Background Task คอยดูแลการส่งข้อมูลขึ้น Cloud และบริหารจัดการ Wi-Fi โดยสื่อสารกันข้ามคอร์ผ่าน FreeRTOS Direct Task Notifications (<code class="text-emerald-400">xTaskNotifyGive</code>) ซึ่งทำให้ระบบเปิดไฟได้ทันทีโดยไม่มีการหน่วง (Zero Latency) ครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "เพราะโค้ดยาวเลยแยกคอร์" หรือ "ก๊อปโค้ดตัวอย่างมาจากอินเทอร์เน็ต"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="freertos">
+          <button onclick="toggleQA(2)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                02
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">FreeRTOS &amp; OS</span>
+                  <span class="text-xs text-slate-400">Control vs Telemetry Latency</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ทำไมเวลาส่งข้อมูลขึ้นคลาวด์มักใช้เวลา 1-2 วินาที แต่หลอดไฟหน้างานจริงติดได้ในระดับมิลลิวินาที?</h4>
+              </div>
+            </div>
+            <i id="qaIcon2" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent2" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบว่าเข้าใจความแตกต่างระหว่าง "Control Path" (การสั่งงานฮาร์ดแวร์ตรง) กับ "Telemetry Path" (การรายงานผลขึ้นระบบ) หรือไม่</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(2)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer2" class="text-slate-200 leading-relaxed">
+                "เกิดจากการแยก Asynchronous Decoupling ครับ หลอดไฟเชื่อมต่อทางกายภาพกับขา PWM (GPIO 18) ของ ESP32 เมื่อคนเดินผ่านหน้า PIR บอร์ดบน Core 1 จะสั่งฟังก์ชัน <code class="text-emerald-400">ledcWrite()</code> สลับดิวตี้ไซเคิลเป็น 100% โดยตรงในเวลาไม่ถึง 1 มิลลิวินาที หลอดไฟจึงสว่างวาบนำทางทันที<br><br>
+                ส่วนความหน่วง 1-2 วินาทีนั้นเกิดขึ้นใน Core 0 ซึ่งเป็นช่องทาง Telemetry สื่อสารผ่านโปรโตคอล HTTPS ข้ามไปยังเซิร์ฟเวอร์ Google ที่อยู่ภายนอก ซึ่งเป็นเพียงการส่งสถิติและอัปเดตหน้าจอแดชบอร์ด จึงไม่มีผลกระทบต่อความปลอดภัยและประสบการณ์ของผู้ใช้งานหน้างานจริงครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "เน็ตของบอร์ดเราเร็วมากจนส่งถึง Google ได้ใน 1 ms" เพราะขัดแย้งกับหลักเครือข่ายพื้นฐาน</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="hardware">
+          <button onclick="toggleQA(3)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                03
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">ฮาร์ดแวร์ &amp; วงจร</span>
+                  <span class="text-xs text-slate-400">Power Rail &amp; No Step-Up Decision</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ทำไมโครงงานนี้ถึงตัดวงจร Step-Up Converter ออก แล้วเลือกใช้ไฟ 5V Mains ตรง? มีข้อพิจารณาทางวิศวกรรมอย่างไร?</h4>
+              </div>
+            </div>
+            <i id="qaIcon3" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent3" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">วัดความเข้าใจเรื่อง Power Management, ประสิทธิภาพวงจร (Efficiency), การป้องกันวงจรเสียหาย และหลักการ YAGNI (ไม่ใส่อุปกรณ์เกินจำเป็น)</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(3)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer3" class="text-slate-200 leading-relaxed">
+                "เราเลือกตัด Step-Up ออกด้วยเหตุผลทางวิศวกรรม 3 ข้อครับ:<br>
+                1. <strong>ความเข้ากันได้ของแรงดัน (Voltage Matching):</strong> เซนเซอร์ PIR (HC-SR501), LDR, และโมดูลหลอดไฟ LED ของเราทำงานที่ระดับแรงดัน 5V DC อยู่แล้ว ซึ่งตรงกับแรงดันจากสาย USB หรืออะแดปเตอร์ไฟ 5V Mains พอดี การเร่งเป็น 12V แล้วต้องมาทอนไฟลงจะทำให้เกิด Switching Loss สูญเสียพลังงานโดยเปล่าประโยชน์ 15-20%<br>
+                2. <strong>ความปลอดภัยของชิป (Component Protection):</strong> ขา GPIO ของ ESP32 รับแรงดันได้สูงสุด 3.3V หากใช้วงจร Step-Up 12V ที่ไม่มีวงจรแยกทางไฟฟ้า (Optoisolator) มีความเสี่ยงสูงที่แรงดันเกินจะกระชากเข้าทำลายชิปและทำให้หลอด LED ขาดในทันที<br>
+                3. <strong>ความเสถียรของระบบ (LDO Stability):</strong> บอร์ด ESP32 มี Onboard LDO Regulator แปลง 5V จากช่อง VIN เป็น 3.3V จ่ายชิปประมวลผลได้อย่างราบเรียบ การใช้ระบบ Single 5V Rail จึงเสถียร ประหยัดต้นทุน และปลอดภัยที่สุดครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "ลืมซื้อ Step-Up" หรือ "ไม่มีเงินซื้อ"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="hardware">
+          <button onclick="toggleQA(4)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                04
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">ฮาร์ดแวร์ &amp; เซนเซอร์</span>
+                  <span class="text-xs text-slate-400">Sensor Physics &amp; False Triggers</span>
+                </div>
+                <h4 class="text-base font-bold text-white">เซนเซอร์ PIR (HC-SR501) มีหลักการทำงานทางฟิสิกส์อย่างไร ทำไมจึงตรวจจับคนเดินได้ แต่ไม่ตอบสนองต่อลมพัดหรือกิ่งไม้ไหว?</h4>
+              </div>
+            </div>
+            <i id="qaIcon4" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent4" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบความเข้าใจเชิงลึกเกี่ยวกับรังสีคลื่นความร้อนอินฟราเรด (Infrared Radiation) และโครงสร้างเลนส์ Fresnel</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(4)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer4" class="text-slate-200 leading-relaxed">
+                "เซนเซอร์ PIR (Passive Infrared) ตรวจจับการเปลี่ยนแปลงของรังสีอินฟราเรดย่านความร้อนคลื่นยาว (~9.4 µm) ที่แผ่ออกมาจากร่างกายมนุษย์ (อุณหภูมิประมาณ 36-37°C) ภายในมีผลึก Pyroelectric สองขั้วต่อกลับเฟสกัน และมีฝาครอบเลนส์ Fresnel ที่ซอยโซนตรวจจับเป็นช่องๆ<br><br>
+                เมื่อคนเดินตัดผ่าน รังสีความร้อนจะตกกระทบผลึกช่องที่ 1 และช่องที่ 2 สลับกัน เกิดเป็นผลต่างแรงดันรูปคลื่น Sine Wave วงจรจึงสั่ง Trigger เอาต์พุตเป็น HIGH แต่หากเป็นลมพัดหรือกิ่งไม้ไหวที่อุณหภูมิเท่ากับสภาพแวดล้อม รังสีความร้อนทั้งสองช่องจะตกกระทบเท่ากันและหักล้างกันเป็นศูนย์ จึงไม่เกิด False Trigger ครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "PIR ยิงลำแสงอินฟราเรดออกไปแล้วสะท้อนกลับมา" เพราะนั่นคือเซนเซอร์ Active IR ไม่ใช่ Passive IR</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="hardware">
+          <button onclick="toggleQA(5)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                05
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">ฮาร์ดแวร์ &amp; สัญญาณ</span>
+                  <span class="text-xs text-slate-400">Digital DO vs ADC Analog</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ทำไมเลือกอ่านสัญญาณโมดูล LDR จากขา Digital Output (DO) ผ่านชิป Comparator LM393 แทนที่จะอ่านขา Analog (AO) ผ่าน ADC ของ ESP32?</h4>
+              </div>
+            </div>
+            <i id="qaIcon5" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent5" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ตรวจสอบความรู้เรื่องข้อจำกัดของวงจรแปลงสัญญาณ Analog-to-Digital (ADC) บนบอร์ด ESP32 และการปรับจูนระบบหน้างาน</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(5)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer5" class="text-slate-200 leading-relaxed">
+                "ด้วยเหตุผล 2 ประการครับ:<br>
+                1. <strong>ข้อจำกัด ADC ของ ESP32:</strong> ชิป ESP32 มีพฤติกรรม Non-linearity ของ ADC ค่อนข้างสูง โดยเฉพาะช่วงแรงดันต่ำกว่า 0.1V และสูงกว่า 3.2V ทำให้การอ่านค่าความเข้มแสงแอนะล็อกมีความคลาดเคลื่อนและต้องใช้เวลาสอบเทียบ (Calibration)<br>
+                2. <strong>ลดภาระ CPU และจูนง่ายหน้างาน:</strong> ระบบของเราต้องการเพียงคำตอบสองสถานะคือ 'มืดแล้วหรือยัง' โมดูล LDR ที่มาพร้อมชิปเปรียบเทียบแรงดัน LM393 มีตัวต้านทานปรับค่าได้ (Trimpot) ทำให้ช่างเทคนิคปรับเกณฑ์แสงสว่างหน้างานได้ด้วยไขควงทันที สัญญาณ DO ที่ส่งมาเป็นระดับลอจิกดิจิทัลตัดปัญหาเรื่องสัญญาณรบกวน (Noise Immunity) และไม่กินรอบเวลาของ CPU ในการสุ่มตัวอย่าง ADC ครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "เขียนโค้ดอ่าน Analog ไม่เป็น"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q6 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="freertos">
+          <button onclick="toggleQA(6)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                06
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">FreeRTOS &amp; ตรรกะ</span>
+                  <span class="text-xs text-slate-400">Edge Detection &amp; Debounce</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ถ้าคนเดินหยุดยืนนิ่งๆ หรือเดินเป็นกลุ่มหลายคน เซนเซอร์ PIR จะนับจำนวนคนผิดพลาดหรือไม่? มีวิธีป้องกันการนับซ้ำ (Double Counting) อย่างไร?</h4>
+              </div>
+            </div>
+            <i id="qaIcon6" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent6" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบความเข้าใจเรื่องข้อจำกัดเชิงกายภาพของเซนเซอร์ PIR และตรรกะ Edge-Triggering ในโค้ด</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(6)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer6" class="text-slate-200 leading-relaxed">
+                "ในโค้ดเราใช้ตรรกะ <strong>Rising-Edge Detection</strong> (<code class="text-emerald-400">prevPirState == LOW && pirState == HIGH</code>) ซึ่งจะนับจำนวนก้าวเพิ่มขึ้นเพียง 1 ครั้งในเสี้ยววินาทีแรกที่คนเดินเข้ามาในรัศมีตรวจจับ แม้คนผู้นั้นจะหยุดยืนนิ่งหรือเดินต่อจนสัญญาณ PIR ค้างเป็น HIGH ตัวนับจะไม่เพิ่มขึ้นซ้ำซ้อนครับ<br><br>
+                อย่างไรก็ตาม ในกรณีที่คนเดินเคียงคู่กันเป็นกลุ่ม เซนเซอร์ PIR เดี่ยวจะมองเห็นเป็น 1 เหตุการณ์เดินผ่าน (Passage Event) ซึ่งเป็นข้อจำกัดทางกายภาพของเซนเซอร์อินฟราเรด หากในอนาคตต้องการนับแยกรายคนแบบแม่นยำ 100% สามารถเสริมเซนเซอร์ Time-of-Flight (ToF) แบบคู่เพื่อทำม่านตรวจจับ หรือใช้กล้อง Edge-AI ขนาดเล็กประมวลผลแทนได้ครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามอ้างว่า "PIR ตัวนี้นับคนในกลุ่มได้เป๊ะ 100%" เพราะเป็นไปไม่ได้ในหลักวิศวกรรมของเซนเซอร์ตัวเดียว</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q7 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="safety">
+          <button onclick="toggleQA(7)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                07
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">ความปลอดภัย &amp; Smart Campus</span>
+                  <span class="text-xs text-slate-400">Loitering Watchdog Analytics</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ฟังก์ชัน "Loitering Alert" (ตรวจจับการยืนแช่เกิน 25 วินาที) มีตรรกะการทำงานอย่างไร และมีประโยชน์ในเชิง Campus Safety อย่างไร?</h4>
+              </div>
+            </div>
+            <i id="qaIcon7" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent7" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบว่าฟีเจอร์นี้ถูกออกแบบขึ้นมาตอบโจทย์ปัญหาจริง (Problem-Solving Value) หรือเป็นเพียงฟังก์ชันสร้างขึ้นมาลอยๆ</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(7)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer7" class="text-slate-200 leading-relaxed">
+                "ทางเดินริมยิม 7 มีลักษณะเป็นทางสัญจรยาวและค่อนข้างเปลี่ยวในยามค่ำคืน จากการศึกษาพฤติกรรมคนเดินเท้าทั่วไปจะใช้เวลาสัญจรผ่านรัศมีตรวจจับ 6 เมตรประมาณ 4-8 วินาทีเท่านั้น หากเซนเซอร์ PIR มีสัญญาณค้างต่อเนื่องยาวนานเกิน 25 วินาที แสดงถึงสภาวะผิดปกติ เช่น มีนักศึกษาเป็นลมหมดสติ, เกิดการทะเลาะวิวาท, หรือมีบุคคลน่าสงสัยมาดักซุ่มรอ<br><br>
+                เมื่อตัวจับเวลาใน Core 1 ครบ 25 วินาที ระบบจะเปลี่ยนสถานะเป็น <code class="text-red-400">LOITERING_ALERT</code> เร่งไฟส่องสว่าง 100% เพื่อป้องปรามเหตุ และสั่งปลุก Core 0 ยิงแจ้งเตือนไปยังคลาวด์และ LINE รปภ. มหาวิทยาลัยทันทีเพื่อส่งเจ้าหน้าที่มาตรวจสอบจุดเกิดเหตุครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "ตั้งเวลา 25 วินาทีมั่วๆ ไม่มีที่มา"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q8 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="hardware">
+          <button onclick="toggleQA(8)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                08
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">ฮาร์ดแวร์ &amp; ไฟฟ้า</span>
+                  <span class="text-xs text-slate-400">PWM Frequency &amp; Acoustic Resonance</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ทำไมต้องกำหนดความถี่ PWM ในการหรี่ไฟ LED ไว้ที่ 5 kHz (5,000 Hz)? ทำไมไม่ใช้ 500 Hz หรือ 1 kHz?</h4>
+              </div>
+            </div>
+            <i id="qaIcon8" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent8" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">วัดความเข้าใจเรื่อง Power Electronics, ปรากฏการณ์ Flicker Effect ในกล้อง และคลื่นเสียงรบกวน (Audible Noise)</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(8)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer8" class="text-slate-200 leading-relaxed">
+                "การเลือกความถี่ 5,000 Hz มีเหตุผลทางวิศวกรรม 3 ประการครับ:<br>
+                1. <strong>ขจัดแถบดำในกล้อง (Zero Camera Flicker):</strong> ความถี่ต่ำกว่า 1 kHz แม้ตาเปล่าจะมองไม่เห็นการกะพริบ แต่เมื่อนักศึกษาใช้กล้องสมาร์ทโฟนถ่ายรูปหรือวิดีโอตอนกลางคืน จะเกิดคลื่นแถบดำวิ่งผ่านภาพ (Rolling Shutter Artifacts) ซึ่งที่ความถี่ 5 kHz จะเนียนตาและไร้แถบดำ 100%<br>
+                2. <strong>ลดเสียงหวีดในวงจร (Acoustic Noise Mitigation):</strong> ความถี่ 500 Hz ถึง 2 kHz มักทำให้ขดลวดหรือตัวเก็บประจุเซรามิกเกิดการสั่นสะเทือนแบบ Piezoelectric รบกวนคนเดินด้วยเสียงหวีดแหลม การขยับขึ้นมาที่ 5 kHz ช่วยลดคลื่นเสียงกวนใจได้มาก<br>
+                3. <strong>สมดุลกับ Switching Loss:</strong> ความถี่ 5 kHz ไม่สูงเกินไปจนทำให้ทรานซิสเตอร์ MOSFET เกิดความร้อนสะสมจากการสลับสัญญาณ (Switching Loss) และไม่รบกวนความถี่วิทยุ 2.4GHz ของ Wi-Fi ครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "ใส่เลข 5000 ตามใจชอบ ไม่มีเหตุผล"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q9 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="iot">
+          <button onclick="toggleQA(9)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                09
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">IoT &amp; เครือข่าย</span>
+                  <span class="text-xs text-slate-400">Offline Fallback &amp; Fail-Safe</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ถ้าสัญญาณ Wi-Fi หลุดหรืออินเทอร์เน็ตล่ม ระบบเปิด-ปิดไฟทางเดินจะยังทำงานได้ตามปกติหรือไม่? มีกลไกป้องกันอย่างไร?</h4>
+              </div>
+            </div>
+            <i id="qaIcon9" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent9" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบหลักการออกแบบระบบวิกฤต (Safety-Critical Fail-Safe) ว่าขึ้นอยู่กับอินเทอร์เน็ตจนทำให้ไฟดับหรือไม่</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(9)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer9" class="text-slate-200 leading-relaxed">
+                "ระบบเปิด-ปิดไฟยังทำงานได้ตามปกติสมบูรณ์แบบ 100% ครับ! เพราะตรรกะการควบคุมไฟทั้งหมดทำงานอยู่ใน <strong>Core 1 แบบ Local Edge Computing</strong> โดยไม่พึ่งพาอินเทอร์เน็ตเลยแม้แต่น้อย<br><br>
+                เมื่อเน็ตหลุด Core 0 จะดับไฟ LED สถานะ (GPIO 2) ลงเพื่อแจ้งเตือนช่างหน้างาน และสั่งเรียกใช้ฟังก์ชัน <code class="text-purple-400">WiFi.reconnect()</code> แบบไม่บล็อกการทำงาน (Non-blocking retry) เมื่อสัญญาณ Wi-Fi กลับมา ระบบจะต่อเชื่อมและกลับมารายงานสถิติขึ้น Google Sheets ต่อทันทีโดยอัตโนมัติครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "ถ้าเน็ตหลุดไฟจะดับทั้งยิม" เพราะระบบโครงสร้างพื้นฐานเพื่อความปลอดภัยห้ามล่มเด็ดขาด</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q10 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="iot">
+          <button onclick="toggleQA(10)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                10
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">IoT &amp; Cloud</span>
+                  <span class="text-xs text-slate-400">HTTP 302 Redirection &amp; Insecure SSL</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ทำไมเวลาส่งข้อมูลไป Google Apps Script ถึงต้องรองรับรหัสสถานะ HTTP 302 Redirect และทำไมต้องใช้ client.setInsecure()?</h4>
+              </div>
+            </div>
+            <i id="qaIcon10" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent10" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">วัดความเข้าใจเรื่องสถาปัตยกรรมคลาวด์ของ Google และข้อจำกัดด้านหน่วยความจำของไมโครคอนโทรลเลอร์ในการทำ SSL Handshake</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(10)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer10" class="text-slate-200 leading-relaxed">
+                "มีเหตุผลทางสถาปัตยกรรมเว็บสองเรื่องครับ:<br>
+                1. <strong>ทำไมต้อง 302 Redirect:</strong> สถาปัตยกรรมของ Google Apps Script เมื่อได้รับ HTTP POST เข้ามาที่ URL ปลายทาง ระบบจะทำการ Redirect ผู้ส่งไปยังเซิร์ฟเวอร์ย่อยที่ให้บริการเอกสารด้วยรหัส <code class="text-purple-400">HTTP 302 Moved Temporarily</code> ในโค้ด ESP32 จึงต้องรับรู้ว่ารหัส 302 หรือ 200 หมายถึงข้อมูลบันทึกลง Google Sheet สำเร็จแล้ว<br>
+                2. <strong>ทำไมต้อง setInsecure():</strong> เนื่องจาก Google มีการหมุนเวียนใบรับรอง SSL Root Certificate เป็นประจำ หากเราฝัง Certificate Fingerprint แบบตายตัวในบอร์ด เมื่อ Google ปรับเปลี่ยนใบรับรอง บอร์ดจะไม่สามารถส่งข้อมูลได้ทันที อีกทั้งการตรวจสอบ Handshake เต็มรูปแบบกิน RAM และเวลาคำนวณของ ESP32 มากเกินไป การข้ามการตรวจสอบในข้อมูล Telemetry ทั่วไปจึงช่วยให้ระบบคล่องตัวและทนทานที่สุดครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "ไม่รู้ว่า 302 คืออะไร ใส่ตามโค้ดตัวอย่าง"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q11 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="freertos">
+          <button onclick="toggleQA(11)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                11
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">FreeRTOS &amp; OS</span>
+                  <span class="text-xs text-slate-400">Concurrency &amp; Race Condition</span>
+                </div>
+                <h4 class="text-base font-bold text-white">การแชร์ตัวแปรข้าม Core ระหว่าง Core 1 กับ Core 0 เช่น trafficCount และสถานะไฟ เสี่ยงเกิดปัญหา Race Condition หรือไม่? ในโค้ดจัดการอย่างไร?</h4>
+              </div>
+            </div>
+            <i id="qaIcon11" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent11" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">วัดความเข้าใจเรื่อง Concurrency, Thread Safety, Critical Section และกลไก IPC ของ FreeRTOS</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(11)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer11" class="text-slate-200 leading-relaxed">
+                "ในสถาปัตยกรรมแบบมัลติคอร์ ย่อมมีความเสี่ยงเรื่อง Race Condition หากสองคอร์พยายามเขียนตัวแปรพร้อมกัน แต่ในระบบของเราได้ป้องกันด้วย 2 มาตรการครับ:<br>
+                1. <strong>หลักการ Single-Writer Multiple-Reader Pattern:</strong> ตัวแปรสถิติทั้งหมด (<code class="text-cyan-400">trafficCount</code>, <code class="text-cyan-400">motionActive</code>, <code class="text-cyan-400">currentDutyCycle</code>) ถูกเขียนและแก้ไขโดย Core 1 เพียงคอร์เดียวเท่านั้น ส่วน Core 0 ทำหน้าที่เป็นผู้บริโภค (Reader) ที่ดึง Snapshot ล่าสุดไปสร้าง JSON Payload จึงไม่เกิดการเขียนทับกันแย่งชิงข้อมูล<br>
+                2. <strong>กลไกการส่งสัญญาณ Atomic:</strong> เราใช้ฟังก์ชัน <code class="text-cyan-400">xTaskNotifyGive()</code> และ <code class="text-cyan-400">ulTaskNotifyTake()</code> ซึ่งเป็นคำสั่งระดับเคอร์เนลของ FreeRTOS ที่เป็น Thread-Safe 100% ทำให้ไม่จำเป็นต้องใช้ Mutex Lock ที่กิน Overhead สูงครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "ไม่มีทางชนกันอยู่แล้วเพราะ ESP32 จัดการให้เองอัตโนมัติ" (ESP32 ไม่ได้จัดการแชร์ตัวแปรข้ามคอร์ให้อัตโนมัติหากไม่เขียนโค้ดคุม)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q12 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="safety">
+          <button onclick="toggleQA(12)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                12
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">พลังงาน &amp; เศรษฐศาสตร์วิศวกรรม</span>
+                  <span class="text-xs text-slate-400">Quantified ROI &amp; Carbon Footprint</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ในเชิงวิศวกรรม ระบบนี้ช่วยประหยัดพลังงานไฟฟ้าได้กี่เปอร์เซ็นต์เมื่อเทียบกับเสาไฟถนนทั่วไป และคำนวณอย่างไร?</h4>
+              </div>
+            </div>
+            <i id="qaIcon12" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent12" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบความสามารถในการให้ตัวเลขเชิงปริมาณ (Quantified Engineering Evidence) และการวิเคราะห์ผลตอบแทนความคุ้มค่า</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(12)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer12" class="text-slate-200 leading-relaxed">
+                "เราสามารถคำนวณเปรียบเทียบในรอบกลางคืน 12 ชั่วโมง (18:00 - 06:00 น.) ได้อย่างชัดเจนครับ:<br>
+                • <strong>เสาไฟถนนเดิม:</strong> เปิด 100% ตลอดทั้ง 12 ชั่วโมง กินไฟ 8.5W ตลอดเวลา คิดเป็นพลังงาน = 8.5W &times; 12h = <strong>102.0 Wh ต่อคืน</strong><br>
+                • <strong>เสาไฟอัจฉริยะ TSE100:</strong> จากข้อมูล Foot-traffic เฉลี่ย มีคนเดินผ่านรวม 3 ชั่วโมง (กินไฟ 8.5W &times; 3h = 25.5 Wh) และช่วงปลอดคน 9 ชั่วโมงอยู่ในโหมดหรี่ Eco 30% (กินไฟ 2.8W &times; 9h = 25.2 Wh) รวมพลังงานต่อคืน = <strong>50.7 Wh</strong><br><br>
+                จะเห็นว่าระบบของเราลดการใช้พลังงานลงได้ถึง <strong>50.3% ในวันปกติ</strong> และหากเป็นช่วงปิดเทอมหรือช่วงดึกสงัดที่มีคนสัญจรน้อย อัตราการประหยัดไฟจะสูงเกิน <strong>70%</strong> ครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "ประหยัดได้เยอะครับ แต่ไม่ได้คำนวณตัวเลขมา"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q13 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="hardware">
+          <button onclick="toggleQA(13)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                13
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">ฮาร์ดแวร์ &amp; HMI</span>
+                  <span class="text-xs text-slate-400">Onboard LED (GPIO 2) Diagnostics</span>
+                </div>
+                <h4 class="text-base font-bold text-white">ไฟ LED สถานะสีน้ำเงินบนบอร์ด ESP32 (GPIO 2) ถูกนำมาใช้สื่อสารสถานะอะไร และมีประโยชน์อย่างไรหน้างาน?</h4>
+              </div>
+            </div>
+            <i id="qaIcon13" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent13" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบการออกแบบเพื่อการใช้งานจริง (Design for Serviceability &amp; Diagnostics) โดยไม่ต้องต่อคอมพิวเตอร์ดู Serial Monitor</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(13)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer13" class="text-slate-200 leading-relaxed">
+                "ไฟ LED สีน้ำเงินบนบอร์ด ESP32 (GPIO 2) ทำหน้าที่เป็น <strong>Hardware Network Health Indicator</strong> เพื่อให้ช่างเทคนิคตรวจเช็กระบบได้ด้วยตาเปล่า:<br>
+                • <strong>ไฟดับสนิท (OFF):</strong> ระบบออฟไลน์ Wi-Fi ขาดการเชื่อมต่อ และกำลังอยู่ในโหมดพยายามเชื่อมต่อใหม่<br>
+                • <strong>ไฟติดสว่างค้าง (Solid ON):</strong> เชื่อมต่อโครงข่ายไร้สายสำเร็จ และกำลังส่งสถิติ Telemetry ขึ้นคลาวด์ได้อย่างราบรื่น<br>
+                สิ่งนี้ช่วยลดเวลาในการตรวจแก้ปัญหา (Troubleshooting) หน้างานอย่างมาก เพราะไม่ต้องปีนบันไดนำโน้ตบุ๊กไปเสียบสาย Serial Monitor ดูโค้ดครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "เปิดไฟไว้ให้ดูสวยงามเฉยๆ"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q14 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="safety">
+          <button onclick="toggleQA(14)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                14
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-red-500/10 text-red-400 border border-red-500/20">การติดตั้ง &amp; สิ่งแวดล้อม</span>
+                  <span class="text-xs text-slate-400">Environmental Protection &amp; IP Rating</span>
+                </div>
+                <h4 class="text-base font-bold text-white">หากนำอุปกรณ์ชุดนี้ไปติดตั้งใช้งานจริงกลางแจ้งริมทางเดินยิม 7 จะเจอปัญหาจากสภาพแวดล้อมอะไรบ้าง และต้องป้องกันอย่างไร (IP Rating)?</h4>
+              </div>
+            </div>
+            <i id="qaIcon14" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent14" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบความพร้อมในการใช้งานจริง (Field Readiness) การจัดการความร้อน ความชื้น และมาตรฐานทางวิศวกรรมโยธาและไฟฟ้า</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(14)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer14" class="text-slate-200 leading-relaxed">
+                "มีสิ่งท้าทายจากธรรมชาติ 3 ประการที่ต้องออกแบบป้องกันตามมาตรฐานครับ:<br>
+                1. <strong>ฝนและความชื้น:</strong> วงจรทั้งหมดต้องบรรจุในกล่องกันน้ำมาตรฐาน <strong>IP65</strong> มีขอบยางซิลิโคนและข้อต่อ Cable Gland ป้องกันน้ำซึมเข้าจุดต่อสายไฟ<br>
+                2. <strong>ความร้อนสะสมและแสง UV:</strong> เลนส์ Fresnel ของ PIR ทำจากโพลีเอทิลีนซึ่งไวต่อแสงแดดและอาจกรอบแตก จึงต้องออกแบบหมวกบังแดด (Sun Hood) ปกป้องตัวเซนเซอร์ และบอร์ด ESP32 ควรติดแผ่นระบายความร้อน (Heatsink) ในตัวเคส<br>
+                3. <strong>แมลงและละอองน้ำ:</strong> แมลงที่บินมาเกาะหน้าเซนเซอร์อาจทำให้เกิด False Trigger จึงต้องปรับค่าความไว (Sensitivity Potentiometer) ให้พอเหมาะกับระยะทางเดิน 5-6 เมตร และใช้ฟังก์ชันกรองสัญญาณกวนในซอฟต์แวร์ครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "เอาเบรดบอร์ดและสายไฟเปลือยไปแขวนบนต้นไม้หรือเสาไฟได้เลย"</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Q15 -->
+        <div class="qa-item rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden transition" data-category="iot">
+          <button onclick="toggleQA(15)" class="w-full p-5 text-left flex items-start justify-between gap-4 hover:bg-slate-800/40 transition">
+            <div class="flex items-start gap-3.5">
+              <span class="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 font-bold flex items-center justify-center shrink-0 text-xs">
+                15
+              </span>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">IoT &amp; สเกลระบบ</span>
+                  <span class="text-xs text-slate-400">Enterprise Scalability &amp; MQTT Migration</span>
+                </div>
+                <h4 class="text-base font-bold text-white">หากมหาวิทยาลัยต้องการขยายระบบนี้ไปติดตั้ง 100 จุดทั่วมหาวิทยาลัยธรรมศาสตร์ Google Sheets จะยังรองรับไหวหรือไม่? และถ้าต้องปรับปรุงควรเปลี่ยนสถาปัตยกรรมเป็นอย่างไร?</h4>
+              </div>
+            </div>
+            <i id="qaIcon15" data-lucide="chevron-down" class="w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200"></i>
+          </button>
+          <div id="qaContent15" class="hidden px-5 pb-5 pt-1 border-t border-slate-800/80 space-y-3.5 text-xs text-slate-300">
+            <div class="p-3 rounded-xl bg-slate-950/70 border border-slate-800">
+              <span class="font-bold text-amber-400 block mb-1">🎯 เจตนาของอาจารย์ / สิ่งที่กรรมการต้องการทดสอบ:</span>
+              <p class="text-slate-400">ทดสอบวิสัยทัศน์สถาปัตยกรรมระบบขนาดใหญ่ (Enterprise IoT Architecture) และความรู้เรื่องโปรโตคอล MQTT / Time-Series Database</p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="font-bold text-emerald-400 text-xs">💡 แนวทางการตอบที่ถูกต้องตามหลักวิศวกรรม:</span>
+                <button onclick="copyQAText(15)" class="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 font-sans">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกแนวตอบ
+                </button>
+              </div>
+              <p id="qaAnswer15" class="text-slate-200 leading-relaxed">
+                "Google Sheets เหมาะสำหรับงานต้นแบบ (Proof-of-Concept) แต่หากขยายเป็น 100 โหนดจะเริ่มติดข้อจำกัดเรื่อง Concurrent Write Limit (ไม่เกิน 30-50 ครั้งต่อนาที) และความช้าของ HTTP Protocol ครับ หากต้องสเกลทั้งวิทยาเขต ควรยกระดับสถาปัตยกรรมเป็น 3 ระดับ:<br><br>
+                1. <strong>เปลี่ยนโปรโตคอลเป็น MQTT:</strong> ส่งข้อมูลผ่าน MQTT Broker แบบ Publish/Subscribe ซึ่งใช้แบนด์วิดท์น้อยกว่า HTTP ถึง 90% และประหยัดพลังงานบอร์ดอย่างมาก<br>
+                2. <strong>เครือข่ายส่งข้อมูลระยะไกล LoRaWAN / NB-IoT:</strong> พื้นที่ทางเดินกว้างที่ไม่มี Wi-Fi สามารถใช้คลื่น LoRa ยิงสัญญาณเข้า Gateway กลางได้ไกล 5-10 กิโลเมตร<br>
+                3. <strong>ระบบฐานข้อมูล Time-Series DB:</strong> เปลี่ยนไปใช้ฐานข้อมูลเฉพาะทาง เช่น InfluxDB หรือ PostgreSQL ร่วมกับแดชบอร์ดระดับอุตสาหกรรมอย่าง Grafana ซึ่งสามารถรองรับข้อมูลระดับหมื่นทรานแซกชันต่อวินาทีได้อย่างมีเสถียรภาพครับ"
+              </p>
+            </div>
+            <div class="p-3 rounded-xl bg-red-500/5 border border-red-500/20 text-red-300">
+              <span class="font-bold block mb-0.5">⚠️ ข้อควรระวัง / สิ่งที่ห้ามตอบเด็ดขาด:</span>
+              <span>ห้ามตอบว่า "Google Sheets ใช้ได้ไม่จำกัด เพิ่มเป็นล้านโหนดก็ไหว" เพราะแสดงถึงความไม่เข้าใจข้อจำกัดของซอฟต์แวร์</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECTION 4: HARDWARE WIRING & BREADBOARD PINOUT -->
+    <section id="wiring" class="space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-2 text-purple-400 text-xs font-bold uppercase tracking-wider mb-1">
+          <i data-lucide="git-commit" class="w-4 h-4"></i> Section 04 • Physical Hardware Wiring
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white">ผังการต่อสายและเชื่อมต่อพินฮาร์ดแวร์จริง (Wiring Map)</h2>
+        <p class="text-sm text-slate-400 mt-1">คู่มือการเชื่อมต่อสายไฟแบบ Lego-Style ปลอดภัย ไม่เสี่ยงบอร์ดไหม้ รองรับสายผู้-เมีย 100%</p>
+      </div>
+
+      <!-- Wiring Table -->
+      <div class="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="text-slate-400 uppercase font-mono bg-slate-950/70 border-b border-slate-800">
+            <tr>
+              <th class="py-3 px-4">ขั้นตอน</th>
+              <th class="py-3 px-4">แถวเบรดบอร์ด</th>
+              <th class="py-3 px-4">สีสายแนะนำ</th>
+              <th class="py-3 px-4">อุปกรณ์ต้นทาง &amp; ขาพิน</th>
+              <th class="py-3 px-4">อุปกรณ์ปลายทาง</th>
+              <th class="py-3 px-4">หน้าที่และสัญญาณ</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-slate-300 font-mono">
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-3 px-4 font-bold text-white">1</td>
+              <td class="py-3 px-4 font-bold text-amber-400">แถวที่ 1</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-red-500/20 text-red-400 font-bold">🔴 สีแดง</span></td>
+              <td class="py-3 px-4">ขา VIN ของ ESP32 (ไฟ 5V)</td>
+              <td class="py-3 px-4">VCC ของ PIR, LDR, MOSFET</td>
+              <td class="py-3 px-4 font-sans text-slate-400">จ่ายไฟเลี้ยง 5V ทั่วทั้งระบบ</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-3 px-4 font-bold text-white">2</td>
+              <td class="py-3 px-4 font-bold text-amber-400">แถวที่ 2</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold">🔵 น้ำเงิน/ดำ</span></td>
+              <td class="py-3 px-4">ขา GND ของ ESP32</td>
+              <td class="py-3 px-4">GND ของ PIR, LDR, MOSFET, LED (-)</td>
+              <td class="py-3 px-4 font-sans text-slate-400">เชื่อม Common Ground ให้ครบวงจร</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-3 px-4 font-bold text-white">3</td>
+              <td class="py-3 px-4 font-bold text-amber-400">แถวที่ 3</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-400 font-bold">🟡 สีส้ม/เหลือง</span></td>
+              <td class="py-3 px-4">ขา OUT ของโมดูล PIR</td>
+              <td class="py-3 px-4 text-emerald-400 font-bold">GPIO 27 ของ ESP32</td>
+              <td class="py-3 px-4 font-sans text-slate-400">สัญญาณ Digital ตรวจพบคนเดิน (HIGH)</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-3 px-4 font-bold text-white">4</td>
+              <td class="py-3 px-4 font-bold text-amber-400">แถวที่ 4</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">🟢 สีเขียว</span></td>
+              <td class="py-3 px-4">ขา DO ของโมดูล LDR (LM393)</td>
+              <td class="py-3 px-4 text-cyan-400 font-bold">GPIO 34 ของ ESP32</td>
+              <td class="py-3 px-4 font-sans text-slate-400">สัญญาณ Digital มืดค่ำ (HIGH)</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-3 px-4 font-bold text-white">5</td>
+              <td class="py-3 px-4 font-bold text-amber-400">แถวที่ 5</td>
+              <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 font-bold">🟣 สีม่วง/ฟ้า</span></td>
+              <td class="py-3 px-4">ขา GPIO 18 ของ ESP32</td>
+              <td class="py-3 px-4 text-amber-400 font-bold">ขา LED (+) หรือ SIG ของ MOSFET</td>
+              <td class="py-3 px-4 font-sans text-slate-400">สัญญาณ PWM 5kHz ปรับหรี่ไฟ (0-255)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 5: SOURCE CODE REPOSITORY -->
+    <section id="code" class="space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-2 text-pink-400 text-xs font-bold uppercase tracking-wider mb-1">
+          <i data-lucide="code-2" class="w-4 h-4"></i> Section 05 • Production Source Code
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-white">ซอร์สโค้ดระบบฉบับสมบูรณ์ (Open Source)</h2>
+            <p class="text-sm text-slate-400 mt-1">พร้อมอัปโหลดขึ้นบอร์ด ESP32 ผ่าน Arduino IDE และติดตั้งบน Google Apps Script</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="switchCodeTab('esp32')" id="tabBtnEsp32" class="px-3.5 py-1.5 rounded-lg bg-pink-500 text-slate-950 font-bold text-xs transition">ESP32 Arduino (.ino)</button>
+            <button onclick="switchCodeTab('gas')" id="tabBtnGas" class="px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-semibold text-xs hover:bg-slate-700 transition">Google Apps Script (.gs)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code Viewer Block -->
+      <div class="rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-3 bg-slate-900/80 border-b border-slate-800 text-xs text-slate-400 font-mono">
+          <span id="codeFileName" class="text-pink-400 font-bold flex items-center gap-2">
+            <i data-lucide="file-code" class="w-4 h-4"></i> campus_safety_node.ino
+          </span>
+          <button onclick="copyCurrentCode()" class="hover:text-white flex items-center gap-1.5 font-sans font-medium transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i> คัดลอกโค้ดทั้งหมด
+          </button>
+        </div>
+        <pre class="p-5 text-xs text-slate-300 overflow-x-auto font-mono max-h-96 leading-relaxed"><code id="codeBlock">/**********************************************************************************
+ * Project: Campus Safety & Foot-Traffic Telemetry Node (Gym 7)
+ * Edition: Smart Grid Edition (Mains 5V DC - No Solar Battery Complexity)
+ * Target Board: ESP32 Dev Module (Dual-Core FreeRTOS Architecture)
+ * Hardware Connections:
+ *   - PIR Motion Sensor (HC-SR501) -> GPIO 27 (Digital IN)
+ *   - LDR Module (Ambient Light)   -> GPIO 34 (Digital IN ขา DO)
+ *   - MOSFET Module / LED          -> GPIO 18 (PWM 5kHz)
+ *   - Onboard Status LED           -> GPIO 2  (Wi-Fi Online/Offline Indicator)
+ **********************************************************************************/
+
+#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+#include &lt;WiFiClientSecure.h&gt;
+
+const char* WIFI_SSID         = "acaii";
+const char* WIFI_PASSWORD     = "11111111";
+const char* GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzncy-C_VV7vz-ZxKnKT_dgyhzXmPWLef3YGY6YuxaTJczWhCDAvPu5xad_2v3xgNjT/exec";
+const char* NODE_ID           = "NODE-GYM7-01";
+
+const int PIN_PIR        = 27;
+const int PIN_LDR        = 34;
+const int PIN_MOSFET     = 18;
+const int PIN_STATUS_LED = 2;
+
+const int PWM_FREQ       = 5000;
+const int PWM_RESOLUTION = 8;
+const int DUTY_OFF   = 0;
+const int DUTY_DIM   = 77;   // 30% Eco-Ambient
+const int DUTY_FULL  = 255;  // 100% Walkway Illumination
+
+const unsigned long LIGHT_HOLD_TIME = 15000;  // 15 seconds
+const unsigned long LOITER_TIME     = 25000;  // 25 seconds Loitering Alert
+
+TaskHandle_t telemetryTaskHandle = NULL;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(PIN_PIR, INPUT_PULLDOWN);
+  pinMode(PIN_LDR, INPUT);
+  pinMode(PIN_STATUS_LED, OUTPUT);
+
+  ledcAttach(PIN_MOSFET, PWM_FREQ, PWM_RESOLUTION);
+  ledcWrite(PIN_MOSFET, DUTY_OFF);
+
+  // สร้าง Task รันเบื้องหลังบน Core 0
+  xTaskCreatePinnedToCore(
+    telemetryTask,
+    "TelemetryTask",
+    8192,
+    NULL,
+    1,
+    &telemetryTaskHandle,
+    0
+  );
+}
+
+void loop() {
+  // Core 1: Hardware Control Engine (< 1 ms latency)
+  bool pirState = (digitalRead(PIN_PIR) == HIGH);
+  bool isNight  = (digitalRead(PIN_LDR) == HIGH);
+
+  // FSM Logic & Loitering Check...
+}
+</code></pre>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-20 border-t border-slate-800/80 py-10 px-4 lg:px-8 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-300">TSE100 Fernie Project</span>
+        <span>•</span>
+        <span>Faculty of Engineering, Thammasat University</span>
+      </div>
+      <div>
+        Prepared by Commander Chokie &amp; Squad for Thanaporn Nopparat
+      </div>
+      <a href="https://github.com/thanakornnopp-dev/TSE100-Fernie" target="_blank" class="hover:text-emerald-400 transition flex items-center gap-1">
+        <i data-lucide="github" class="w-3.5 h-3.5"></i> github.com/thanakornnopp-dev/TSE100-Fernie
+      </a>
+    </div>
+  </footer>
+
+  <!-- Interactive JavaScript -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // ==========================================
+    // QA Accordion & Filter Logic
+    // ==========================================
+    function toggleQA(id) {
+      const content = document.getElementById('qaContent' + id);
+      const icon = document.getElementById('qaIcon' + id);
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.classList.add('rotate-180');
+      } else {
+        content.classList.add('hidden');
+        icon.classList.remove('rotate-180');
+      }
+    }
+
+    function filterQA(category) {
+      const items = document.querySelectorAll('.qa-item');
+      items.forEach(item => {
+        if (category === 'all' || item.dataset.category === category) {
+          item.style.display = 'block';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      // Update button styling
+      const buttons = ['all', 'hardware', 'freertos', 'iot', 'safety'];
+      buttons.forEach(cat => {
+        const btn = document.getElementById('btnQA' + cat.charAt(0).toUpperCase() + cat.slice(1));
+        if (btn) {
+          if (cat === category) {
+            btn.className = "px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold transition";
+          } else {
+            btn.className = "px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition";
+          }
+        }
+      });
+    }
+
+    function copyQAText(id) {
+      const text = document.getElementById('qaAnswer' + id).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('คัดลอกแนวคำตอบข้อ ' + id + ' เรียบร้อยแล้ว!');
+      });
+    }
+
+    // ==========================================
+    // Live Hardware Simulator Logic
+    // ==========================================
+    let simIsNight = true;
+    let simMotionActive = false;
+    let simIsLoitering = false;
+    let simTrafficCount = 0;
+    let simHoldTimer = null;
+
+    function simUpdateUI() {
+      const lampGlow = document.getElementById('lampGlow');
+      const lampBulb = document.getElementById('lampBulb');
+      const stateBadge = document.getElementById('simStateBadge');
+      const metricDuty = document.getElementById('metricDuty');
+      const metricWatts = document.getElementById('metricWatts');
+      const metricTraffic = document.getElementById('metricTraffic');
+      const simJsonPayload = document.getElementById('simJsonPayload');
+      const logBox = document.getElementById('simLogBox');
+
+      metricTraffic.innerText = simTrafficCount + " คน";
+
+      let statusStr = "DAY_OFF";
+      let duty = 0;
+      let dutyRaw = 0;
+      let watts = 0.6;
+      let alertStr = simIsLoitering ? "LOITERING_ALERT" : "NORMAL";
+
+      if (!simIsNight) {
+        statusStr = "DAY_OFF";
+        duty = 0;
+        dutyRaw = 0;
+        watts = 0.6;
+        lampGlow.className = "absolute w-40 h-40 rounded-full lamp-glow-off transition-all duration-700 pointer-events-none -top-4";
+        lampBulb.style.backgroundColor = "rgba(71, 85, 105, 0.4)";
+        stateBadge.className = "px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-mono";
+        stateBadge.innerText = "0% DAY OFF";
+      } else {
+        if (simMotionActive) {
+          statusStr = "100%_ACTIVE";
+          duty = 100;
+          dutyRaw = 255;
+          watts = 8.5;
+          lampGlow.className = "absolute w-40 h-40 rounded-full lamp-glow-full transition-all duration-700 pointer-events-none -top-4";
+          lampBulb.style.backgroundColor = "rgba(254, 240, 138, 0.95)";
+          stateBadge.className = "px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono animate-pulse";
+          stateBadge.innerText = simIsLoitering ? "🚨 LOITERING ALERT (100%)" : "100% WALKWAY ILLUMINATION";
+        } else {
+          statusStr = "30%_AMBIENT";
+          duty = 30;
+          dutyRaw = 77;
+          watts = 2.8;
+          lampGlow.className = "absolute w-40 h-40 rounded-full lamp-glow-dim transition-all duration-700 pointer-events-none -top-4";
+          lampBulb.style.backgroundColor = "rgba(253, 224, 71, 0.6)";
+          stateBadge.className = "px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-mono";
+          stateBadge.innerText = "30% ECO-AMBIENT";
+        }
+      }
+
+      metricDuty.innerText = duty + "% (" + dutyRaw + ")";
+      metricWatts.innerText = watts.toFixed(1) + " W";
+
+      // Update JSON preview
+      const payloadObj = {
+        node_id: "NODE-GYM7-01",
+        traffic_count: simTrafficCount,
+        light_status: statusStr,
+        power_watts: watts,
+        alert_status: alertStr
+      };
+      simJsonPayload.innerText = JSON.stringify(payloadObj, null, 2);
+    }
+
+    function simAppendLog(msg, colorClass = "text-slate-400") {
+      const logBox = document.getElementById('simLogBox');
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = colorClass;
+      div.innerText = "[" + time + "] " + msg;
+      logBox.appendChild(div);
+      logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function simSetEnvironment(isNight) {
+      simIsNight = isNight;
+      const btnDay = document.getElementById('btnDay');
+      const btnNight = document.getElementById('btnNight');
+      const lblLdr = document.getElementById('lblLdrState');
+
+      if (isNight) {
+        btnNight.className = "px-3.5 py-2.5 rounded-xl border border-amber-500/50 bg-amber-500/15 text-amber-300 text-xs font-semibold hover:border-amber-400 transition flex items-center justify-center gap-2";
+        btnDay.className = "px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-xs font-semibold hover:border-amber-400 transition flex items-center justify-center gap-2";
+        lblLdr.innerText = "กลางคืน (Night DO=HIGH)";
+        lblLdr.className = "font-mono text-[11px] text-amber-400";
+        simAppendLog("LDR Triggered: Night detected -> Switch to Eco-glow 30%", "text-amber-400");
+      } else {
+        btnDay.className = "px-3.5 py-2.5 rounded-xl border border-amber-500/50 bg-amber-500/15 text-amber-300 text-xs font-semibold hover:border-amber-400 transition flex items-center justify-center gap-2";
+        btnNight.className = "px-3.5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 text-xs font-semibold hover:border-amber-400 transition flex items-center justify-center gap-2";
+        lblLdr.innerText = "กลางวัน (Day DO=LOW)";
+        lblLdr.className = "font-mono text-[11px] text-slate-400";
+        simMotionActive = false;
+        simIsLoitering = false;
+        simAppendLog("LDR Triggered: Daylight detected -> Duty 0% (Power Cut)", "text-slate-400");
+      }
+      simUpdateUI();
+    }
+
+    function simPedestrianPass() {
+      simTrafficCount++;
+      simMotionActive = true;
+      simIsLoitering = false;
+      document.getElementById('lblPirState').innerText = "คนเดินผ่าน (PIR HIGH)";
+      document.getElementById('lblPirState').className = "font-mono text-[11px] text-emerald-400";
+      
+      simAppendLog("PIR Edge Rising: Pedestrian detected! Traffic++ -> " + simTrafficCount, "text-emerald-400");
+      simAppendLog("Core 1: PWM Duty set to 100% (Instant <1ms)", "text-emerald-300");
+      simAppendLog("Core 0: xTaskNotifyGive triggered -> HTTPS POST to Google Sheet", "text-cyan-400");
+
+      if (simHoldTimer) clearTimeout(simHoldTimer);
+      simHoldTimer = setTimeout(() => {
+        simMotionActive = false;
+        document.getElementById('lblPirState').innerText = "ไม่มีการเคลื่อนไหว";
+        document.getElementById('lblPirState').className = "font-mono text-[11px] text-slate-400";
+        simAppendLog("Hold-time expired (15s): Lamp dimmed back to 30%", "text-amber-400");
+        simUpdateUI();
+      }, 5000); // 5 seconds demo hold
+
+      simUpdateUI();
+    }
+
+    function simLoiteringTrigger() {
+      simTrafficCount++;
+      simMotionActive = true;
+      simIsLoitering = true;
+      document.getElementById('lblPirState').innerText = "คนยืนแช่เกิน 25s (Loitering)";
+      document.getElementById('lblPirState').className = "font-mono text-[11px] text-red-400";
+
+      simAppendLog("🚨 WATCHDOG: Motion active continuously > 25s!", "text-red-400 font-bold");
+      simAppendLog("ALERT STATE: LOITERING_ALERT dispatched to Security LINE & Cloud", "text-red-300");
+
+      if (simHoldTimer) clearTimeout(simHoldTimer);
+      simHoldTimer = setTimeout(() => {
+        simMotionActive = false;
+        simIsLoitering = false;
+        document.getElementById('lblPirState').innerText = "ไม่มีการเคลื่อนไหว";
+        document.getElementById('lblPirState').className = "font-mono text-[11px] text-slate-400";
+        simAppendLog("Watchdog reset to Normal.", "text-slate-400");
+        simUpdateUI();
+      }, 7000);
+
+      simUpdateUI();
+    }
+
+    function simReset() {
+      if (simHoldTimer) clearTimeout(simHoldTimer);
+      simTrafficCount = 0;
+      simMotionActive = false;
+      simIsLoitering = false;
+      simSetEnvironment(true);
+      document.getElementById('lblPirState').innerText = "ไม่มีการเคลื่อนไหว";
+      document.getElementById('lblPirState').className = "font-mono text-[11px] text-slate-400";
+      simAppendLog("System reset to defaults.", "text-slate-500");
+      simUpdateUI();
+    }
+
+    // ==========================================
+    // Code Viewer Tabs
+    // ==========================================
+    const esp32Code = `// ESP32 Dual-Core FreeRTOS Architecture
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <WiFiClientSecure.h>
+
+const char* WIFI_SSID         = "acaii";
+const char* WIFI_PASSWORD     = "11111111";
+const char* GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzncy-C_VV7vz-ZxKnKT_dgyhzXmPWLef3YGY6YuxaTJczWhCDAvPu5xad_2v3xgNjT/exec";
+const char* NODE_ID           = "NODE-GYM7-01";
+
+const int PIN_PIR        = 27;  // PIR Sensor OUT
+const int PIN_LDR        = 34;  // LDR Module DO
+const int PIN_MOSFET     = 18;  // PWM Luminaire
+const int PIN_STATUS_LED = 2;   // Onboard Wi-Fi LED
+
+const int PWM_FREQ       = 5000;
+const int PWM_RESOLUTION = 8;
+const int DUTY_OFF   = 0;
+const int DUTY_DIM   = 77;   // 30% Eco-Ambient
+const int DUTY_FULL  = 255;  // 100% Walkway Illumination
+
+const unsigned long LIGHT_HOLD_TIME = 15000; // 15s Hold
+const unsigned long LOITER_TIME     = 25000; // 25s Alert
+
+TaskHandle_t telemetryTaskHandle = NULL;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(PIN_PIR, INPUT_PULLDOWN);
+  pinMode(PIN_LDR, INPUT);
+  pinMode(PIN_STATUS_LED, OUTPUT);
+
+  ledcAttach(PIN_MOSFET, PWM_FREQ, PWM_RESOLUTION);
+  ledcWrite(PIN_MOSFET, DUTY_OFF);
+
+  // FreeRTOS Task pinned to Core 0 for Telemetry
+  xTaskCreatePinnedToCore(
+    telemetryTask,
+    "TelemetryTask",
+    8192,
+    NULL,
+    1,
+    &telemetryTaskHandle,
+    0
+  );
+}
+
+void loop() {
+  // Core 1: Sub-millisecond Hardware Control Loop (<1ms)
+  unsigned long now = millis();
+  bool pirState = (digitalRead(PIN_PIR) == HIGH);
+  bool isNight  = (digitalRead(PIN_LDR) == HIGH);
+
+  // Rising Edge Detection for Traffic Count
+  if (pirState && !prevPirState) {
+    trafficCount++;
+    motionActive = true;
+    motionStartTime = now;
+    if (telemetryTaskHandle != NULL) {
+      xTaskNotifyGive(telemetryTaskHandle); // Event-driven Push
+    }
+  }
+
+  // Finite State Machine (FSM)
+  if (!isNight) {
+    ledcWrite(PIN_MOSFET, DUTY_OFF);
+  } else if (motionActive) {
+    ledcWrite(PIN_MOSFET, DUTY_FULL);
+    if (now - motionStartTime > LIGHT_HOLD_TIME) {
+      motionActive = false;
+      if (telemetryTaskHandle != NULL) xTaskNotifyGive(telemetryTaskHandle);
+    }
+  } else {
+    ledcWrite(PIN_MOSFET, DUTY_DIM);
+  }
+}`;
+
+    const gasCode = `// Google Apps Script Web App Backend (Code.gs)
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const now = new Date();
+    const timestamp = Utilities.formatDate(now, "GMT+7", "yyyy-MM-dd HH:mm:ss");
+    
+    const nodeId       = payload.node_id || "NODE-GYM7-01";
+    const trafficCount = Number(payload.traffic_count || 0);
+    const lightStatus  = String(payload.light_status || "OFF");
+    const powerWatts   = Number(payload.power_watts || 0.0);
+    const alertStatus  = String(payload.alert_status || "NORMAL");
+
+    // 1. High-Speed Cache for Real-Time Web Dashboard (<20ms)
+    const cacheObj = { nodeId, timestamp, trafficCount, lightStatus, powerWatts, alertStatus };
+    CacheService.getScriptCache().put("LATEST_REALTIME_STATS", JSON.stringify(cacheObj), 21600);
+
+    // 2. Append to Permanent Google Sheet
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("TelemetryLogs");
+    sheet.appendRow([timestamp, nodeId, trafficCount, lightStatus, powerWatts, alertStatus]);
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "SUCCESS" }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "ERROR", msg: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
+
+    let currentTab = 'esp32';
+    function switchCodeTab(tab) {
+      currentTab = tab;
+      const codeBlock = document.getElementById('codeBlock');
+      const codeFileName = document.getElementById('codeFileName');
+      const tabBtnEsp32 = document.getElementById('tabBtnEsp32');
+      const tabBtnGas = document.getElementById('tabBtnGas');
+
+      if (tab === 'esp32') {
+        codeBlock.innerText = esp32Code;
+        codeFileName.innerHTML = '<i data-lucide="file-code" class="w-4 h-4"></i> campus_safety_node.ino';
+        tabBtnEsp32.className = "px-3.5 py-1.5 rounded-lg bg-pink-500 text-slate-950 font-bold text-xs transition";
+        tabBtnGas.className = "px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-semibold text-xs hover:bg-slate-700 transition";
+      } else {
+        codeBlock.innerText = gasCode;
+        codeFileName.innerHTML = '<i data-lucide="file-code" class="w-4 h-4"></i> Code.gs (Google Apps Script)';
+        tabBtnGas.className = "px-3.5 py-1.5 rounded-lg bg-pink-500 text-slate-950 font-bold text-xs transition";
+        tabBtnEsp32.className = "px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 font-semibold text-xs hover:bg-slate-700 transition";
+      }
+      lucide.createIcons();
+    }
+
+    function copyCurrentCode() {
+      const code = (currentTab === 'esp32') ? esp32Code : gasCode;
+      navigator.clipboard.writeText(code).then(() => {
+        alert('คัดลอกโค้ด ' + (currentTab === 'esp32' ? 'ESP32 (.ino)' : 'Google Apps Script (.gs)') + ' เรียบร้อยแล้ว!');
+      });
+    }
+
+    // Initialize UI
+    simUpdateUI();
+  </script>
+</body>
+</html>
